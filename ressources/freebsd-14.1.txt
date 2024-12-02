@@ -1,0 +1,1 @@
+https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/14.1/FreeBSD-14.1-RELEASE-amd64-bootonly.iso
