@@ -10,3 +10,4 @@ pkg_add nano
 # Create doas conf
 nano /etc/doas.conf
 permit nopass user
+doas su
