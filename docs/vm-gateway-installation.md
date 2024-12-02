@@ -14,7 +14,7 @@ Attribute IP address to a network interface : edit or create config files on `et
 
 ```bash
 # For the network 1 on em1
-echo "inet 10.0.1.1 255.255.255.0" > etc/hostanme.em1
+echo "inet 10.0.1.1 255.255.255.0" > etc/hostname.em1
 ```
 
 Restart interfaces to apply changes
