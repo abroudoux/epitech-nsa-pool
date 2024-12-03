@@ -98,12 +98,12 @@ match out on $ext_if from {$lan1_net, $lan2_net, $lan3_net} to any nat-to ($ext_
 # Politique par défaut
 block all              # Bloque tout par défaut
 
-# Pour se connecter en ssh à la vm
-pass in on lo0 proto tcp to port 22 keep state # after block all
+# Autoriser le trafic redirigé
+pass in on $ext_if proto tcp to 127.0.0.1 port 22 keep state
 
-# Règles de passage
-# Autoriser localhost (loopback) sur le port 8080
-pass in on lo0 proto tcp to port 8080 keep state
+# Réponses aux connexions NAT (entrant)
+pass in on $ext_if inet proto tcp from any to ($ext_if) keep state
+pass in on $ext_if inet proto udp from any to ($ext_if) keep state
 
 # LAN-1 (Administration) : accès complet
 pass in on $lan1_if from $lan1_net to any keep state
@@ -121,7 +121,7 @@ pass out on $ext_if to any keep state
 #### Authorize forwardind port 22 to connect with ssh
 
 ```bash
-pass in on lo0 proto tcp to port 22 keep state # after block all
+pass in on $ext_if proto tcp to 127.0.0.1 port 22 keept safe # after block all
 ```
 
 #### Reload PF conf
@@ -134,4 +134,18 @@ pfctl -f /etc/pf.conf
 
 ```bash
 pfctl -sr
+```
+
+#### Test connexion
+
+```bash
+nc -vz 8.8.8.8 80
+```
+
+```bash
+curl -I http://google.com
+```
+
+```bash
+ping 8.8.8.8
 ```
