@@ -71,8 +71,67 @@ rcctl start dhcpd
 rcctl check dhcpd
 ```
 
-#### Authorize forwardin port 22 to connect with ssh
+#### Configure Paquet Filter
+
+Edit `/etc/pf.conf`
 
 ```bash
-pass in on lo0 proto tcp to port 22 keep state
+# Interfaces
+ext_if = "em0"    # Interface Internet (externe)
+lan1_if = "em1"   # Interface pour LAN-1 (Administration)
+lan2_if = "em2"   # Interface pour LAN-2 (Serveur)
+lan3_if = "em3"   # Interface pour LAN-3 (Employés)
+
+# Réseaux
+lan1_net = "192.168.42.0/26"
+lan2_net = "192.168.42.64/26"
+lan3_net = "192.168.42.128/26"
+
+# Options globales
+set skip on lo         # Ignore le filtrage sur l'interface loopback
+set block-policy drop  # Bloque tout trafic non autorisé (droppé silencieusement)
+set loginterface $ext_if # Log les paquets sur l'interface externe
+
+# NAT (masquerade) : Permet aux LANs d'accéder à Internet
+match out on $ext_if from {$lan1_net, $lan2_net, $lan3_net} to any nat-to ($ext_if)
+
+# Politique par défaut
+block all              # Bloque tout par défaut
+
+# Pour se connecter en ssh à la vm
+pass in on lo0 proto tcp to port 22 keep state # after block all
+
+# Règles de passage
+# Autoriser localhost (loopback) sur le port 8080
+pass in on lo0 proto tcp to port 8080 keep state
+
+# LAN-1 (Administration) : accès complet
+pass in on $lan1_if from $lan1_net to any keep state
+
+# LAN-2 (Serveur) : autorise uniquement le trafic nécessaire
+pass in on $lan2_if from $lan2_net to $lan1_net keep state
+
+# LAN-3 (Employés) : accès HTTP/HTTPS uniquement au serveur dans LAN-2
+pass in on $lan3_if proto { tcp udp } from $lan3_net to $lan2_net port { http https } keep state
+
+# Trafic sortant vers Internet pour tous les LANs
+pass out on $ext_if to any keep state
+```
+
+#### Authorize forwardind port 22 to connect with ssh
+
+```bash
+pass in on lo0 proto tcp to port 22 keep state # after block all
+```
+
+#### Reload PF conf
+
+```bash
+pfctl -f /etc/pf.conf
+```
+
+#### List PF conf
+
+```bash
+pfctl -sr
 ```
