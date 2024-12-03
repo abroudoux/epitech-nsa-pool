@@ -61,3 +61,18 @@ subnet 192.168.42.128 netmask 255.255.255.192 {
     option domain-name-servers 8.8.8.8, 8.8.4.4;
 }
 ```
+
+Launch DHCP server
+
+```bash
+nano /etc/rc.conf.local
+dhcpd_flags=""
+rcctl start dhcpd
+rcctl check dhcpd
+```
+
+#### Authorize forwardin port 22 to connect with ssh
+
+```bash
+pass in on lo0 proto tcp to port 22 keep state
+```
