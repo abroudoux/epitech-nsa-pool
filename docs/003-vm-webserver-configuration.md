@@ -35,7 +35,7 @@ cd /usr/ports/lang/php74
 Install the packages
 
 ```bash
-pkg install bison automake autoconfig libtool re2c rccp pcre
+pkg install bison automake autoconf libtool re2c pcre gcc libxml2
 ```
 
 Install with Makefile

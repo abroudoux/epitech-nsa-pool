@@ -6,7 +6,7 @@ cd /usr/ports
 
 git checkout 2022Q4
 
-pkg install bison automake autoconfig libtool re2c rccp pcre
+pkg install bison automake autoconf libtool re2c pcre gcc libxml2
 
 cd /usr/ports/lang/php74
 
