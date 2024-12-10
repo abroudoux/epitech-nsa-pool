@@ -1,0 +1,5 @@
+- fixer l'addresse du serveur web en 192.168.42.70
+- changer TOUS les mots de passe
+- enlever la règle de port-forwarding sur le pare-feu
+- faire un diapo
+- compléter la doc
