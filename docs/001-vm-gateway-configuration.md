@@ -89,33 +89,64 @@ lan3_net = "192.168.42.128/26"
 
 # Options globales
 set skip on lo         # Ignore le filtrage sur l'interface loopback
-set block-policy drop  # Bloque tout trafic non autorisé (droppé silencieusement)
+set block-policy drop  # Bloque tout trafic non autorisé (droppé silencieuseme  nt)
 set loginterface $ext_if # Log les paquets sur l'interface externe
 
 # NAT (masquerade) : Permet aux LANs d'accéder à Internet
 match out on $ext_if from {$lan1_net, $lan2_net, $lan3_net} to any nat-to ($ext_if)
 
-# Politique par défaut
-block all              # Bloque tout par défaut
+block all
 
 # Autoriser le trafic redirigé
 pass in on $ext_if proto tcp to 127.0.0.1 port 22 keep state
 
-# Réponses aux connexions NAT (entrant)
-pass in on $ext_if inet proto tcp from any to ($ext_if) keep state
-pass in on $ext_if inet proto udp from any to ($ext_if) keep state
+################
 
-# LAN-1 (Administration) : accès complet
+# LAN1 -> Router
 pass in on $lan1_if from $lan1_net to any keep state
 
-# LAN-2 (Serveur) : autorise uniquement le trafic nécessaire
-pass in on $lan2_if from $lan2_net to $lan1_net keep state
+# LAN1 -> LAN2 { http, https }
+pass out on $lan2_if proto tcp from $lan1_net to $lan2_net port {80, 443} keep state
 
-# LAN-3 (Employés) : accès HTTP/HTTPS uniquement au serveur dans LAN-2
-pass in on $lan3_if proto { tcp udp } from $lan3_net to $lan2_net port { http https } keep state
+# LAN1 -> LAN2 { ssh }
+pass out on $lan2_if proto tcp from $lan1_net to $lan2_net port 22 keep state
+# LAN1 -> LAN3 { ssh }
+pass out on $lan3_if proto tcp from $lan1_net to $lan3_net port 22 keep state
 
-# Trafic sortant vers Internet pour tous les LANs
-pass out on $ext_if to any keep state
+################
+
+# LAN2 -> Router
+pass in on $lan2_if from $lan2_net to any keep state
+
+# LAN2 -x> LAN3
+block in on $lan2_if from $lan2_net to $lan3_if
+
+# LAN2 -x> LAN1
+block in on $lan2_if from $lan2_net to $lan1_if
+
+# LAN2 -> LAN1 { http, https }
+pass out on $lan1_if proto tcp from $lan1_net to $lan2_net port {80, 443} keep state
+
+# LAN2 -> LAN3 { http, https }
+pass out on $lan3_if proto tcp from $lan2_net to $lan3_net port {80, 443} keep state
+
+################
+
+# LAN3 -> Router
+pass in on $lan3_if from $lan3_net to any keep state
+
+# LAN3 -x> LAN1
+block in on $lan3_if from $lan3_net to $lan1_if
+
+# LAN3 -x> LAN2
+block in on $lan3_if from $lan3_net to $lan2_if
+
+# LAN3 -> LAN2 { http, https }
+pass out on $lan2_if proto tcp from $lan3_net to $lan2_net port {80, 443} keep state
+################
+
+# Router -> Internet
+pass out on $ext_if from any to any keep state
 ```
 
 #### Authorize forwardind port 22 to connect with ssh
@@ -148,4 +179,14 @@ curl -I http://google.com
 
 ```bash
 ping 8.8.8.8
+```
+
+#### Change Webserver adress to `192.168.24.70`
+
+```bash
+# /etc/dhcp.conf
+host webserver {
+    hardware ethernet <mac-address-of-the-webserver>;
+    fixed address 192.168.24.70;
+}
 ```
